@@ -9,10 +9,8 @@
   },
   "author": "YomoSK",
   "license": "ISC",
-  "devDependencies": {
-    "electron": "^30.0.6"
-  },
   "dependencies": {
+    "electron": "^30.0.6",
     "mitt": "^3.0.1"
   }
 }

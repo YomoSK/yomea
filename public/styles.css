@@ -10,7 +10,7 @@ nav {
     top: 0;
     left: 0;
     width: 100%;
-    height: 50px;
+    height: 100vh;
     background: #E3F4FEAA;
     /* background: linear-gradient(to right, #D56DFBAA, #E3F4FEAA, #FFFFFFAA); */
     backdrop-filter: blur(10px);
@@ -39,7 +39,9 @@ nav > #controls {
 }
 
 nav > #controls > div {
-    margin-top: 1px;
+    width: 12px;
+    aspect-ratio: 1;
+    border-radius: 50%;
     cursor: pointer;
 }
 
