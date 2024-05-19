@@ -1,4 +1,6 @@
-const { app, BrowserWindow, BrowserView, WebContentsView } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain } = require('electron');
+const path = require('path');
+const cheerio = require('cheerio');
 const mitt = require('mitt');
 
 const emitter = mitt();
@@ -10,38 +12,64 @@ function createWindow() {
       width: winSize.width,
       height: winSize.height,
       title: 'Yomea DEV',
-      frame: true,
+      frame: false,
       center: true,
+      movable: false,
+      titleBarStyle: 'hiddenInset',
       webPreferences: {
          nodeIntegration: true,
-         contextIsolation: false,
-         webviewTag: true
+         contextIsolation: false
       }
    });
 
    const view = new WebContentsView();
-   view.webContents.loadURL('https://google.com');
    win.setContentView(view);
+   // view.webContents.openDevTools({ mode: 'undocked' });
 
    const topbar = new BrowserWindow({
       parent: win,
       width: winSize.width,
-      height: 50,
+      height: winSize.height,
       transparent: true,
       frame: false,
       center: true,
-      movable: false,
-      resizable: false
+      resizable: false,
+      vibrancy: 'under-window',
+      webPreferences: {
+         nodeIntegration: true,
+         contextIsolation: true,
+         preload: path.join(__dirname, 'preload.js')
+      }
    });
    topbar.webContents.loadFile('./public/index.html');
-   topbar.setPosition(...win.getPosition());
+   topbar.setPosition(win.getPosition()[0], win.getPosition()[1]);
+   // topbar.webContents.openDevTools({ mode: 'undocked' });
 
-   win.on('move', () => {
-      topbar.setPosition(...win.getPosition());
+   topbar.on('move', () => {
+      win.setPosition(topbar.getPosition()[0], topbar.getPosition()[1]);
    });
-   
-   emitter.on('maximize', () => win.maximize());
+
+   win.on('resize', () => {
+      topbar.setSize(...win.getSize());
+   });
+
+   ipcMain.on('load-page', (_, url) => {
+      console.log(url);
+      const newView = new WebContentsView();
+      newView.webContents.loadURL(url);
+      win.setContentView(newView);
+   });
+
+   ipcMain.on('close-app', () => win.close());
+   ipcMain.on('max-app', () => win.maximize());
+   ipcMain.on('min-app', () => win.minimize());
+
+   topbar.on('close', () => app.quit()); 
 }
+
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('auto-detect', 'false');
+app.commandLine.appendSwitch('no-proxy-server');
 
 app.on('ready', () => createWindow());
 app.on('window-all-closed', () => {

@@ -7,13 +7,25 @@
    </head>
    <body>
       <nav>
-         <input id="searchbar" type="url" placeholder="Search in the universe..."></input>
+         <div id="searchbar">
+            <i v-if="isHTTPSPage()" :style="{ 'color': isHTTPSPage() ? 'black' : null }" class="fas fa-lock"></i>
+            <input
+               id="searchbar"
+               type="url"
+               placeholder="Search in the universe..."
+               v-model="url"
+               :style="{ 'padding-left': isHTTPSPage() &&!focusedSearchBar ? '2rem' : null, 'text-align': focusedSearchBar ? 'center' : null }"
+               @keydown="loadURL($event)"
+               @focusin="focusedSearchBar = true"
+               @focusout="focusedSearchBar = false"
+            ></input>
+         </div>
          <div id="controls">
-            <div onclick="quit()" style="background: #FF3B30;"></div>
+            <div onclick="quit()" style="background: #FF3B30;" @click.prevent="closeApp()"></div>
             <div onclick="maximize()" style="background: #FFCC00; border-radius: 0;"></div>
          </div>
       </nav>
-      <webview src="about:blank"></webview>
+      <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
       <script src="./script.js"></script>
    </body>
 </html>
