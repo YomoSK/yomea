@@ -23,6 +23,7 @@ function createWindow() {
    });
 
    const view = new WebContentsView();
+   view.webContents.loadURL('about:blank');
    win.setContentView(view);
    // view.webContents.openDevTools({ mode: 'undocked' });
 
@@ -50,7 +51,9 @@ function createWindow() {
    });
 
    win.on('resize', () => {
+      console.log(win.getSize());
       topbar.setSize(...win.getSize());
+      console.log(win.getSize());
    });
 
    ipcMain.on('load-page', (_, url) => {

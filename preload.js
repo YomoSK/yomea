@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer');
+const superagent = require('superagent');
 const cheerio = require('cheerio');
 
 contextBridge.exposeInMainWorld('electron', {
@@ -9,4 +10,14 @@ contextBridge.exposeInMainWorld('electron', {
       })
    },
    closeApp: () => ipcRenderer.send('close-app', {})
+});
+
+contextBridge.exposeInMainWorld('webSupplier', {
+   getTitle: url => {
+      return new Promise((resolve, reject) => {
+         superagent.get(url).then(html => {
+            resolve(cheerio.load(html.text)('title').text());
+         }).catch(reject);
+      });
+   }
 });

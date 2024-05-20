@@ -7,6 +7,9 @@
    </head>
    <body>
       <nav>
+         <div id="openedtab" v-if="Object.keys(this.opened).length > 0">
+            <p>{{ this.opened.title }}</p>
+         </div>
          <div id="searchbar">
             <i v-if="isHTTPSPage()" :style="{ 'color': isHTTPSPage() ? 'black' : null }" class="fas fa-lock"></i>
             <input
