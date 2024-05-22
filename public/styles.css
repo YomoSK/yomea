@@ -31,6 +31,7 @@ nav > #openedtab {
     font-size: .85rem;
     font-weight: 600;
     position: absolute;
+    max-width: 20%;
     left: 1rem;
 }
 
@@ -56,9 +57,10 @@ nav > #searchbar {
 }
 
 nav > #searchbar > i {
-    margin: -1px 0 0 .5rem;
+    margin: 0 0 0 .5rem;
     color: #888;
     position: absolute;
+    transform: scale(.9);
 }
 
 nav > #searchbar > input {
