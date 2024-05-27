@@ -14,7 +14,7 @@ nav {
     height: 57px;
     background: #E3F4FEBB;
     /* background: linear-gradient(to right, #D56DFBAA, #E3F4FEAA, #FFFFFFAA); */
-    box-shadow: 0 16px 40px 0 #7090B044;
+    /* box-shadow: 0 16px 40px 0 #7090B044; */
     border-radius: 8px 8px 0 0;
     overflow: hidden;
     display: flex;
@@ -26,27 +26,62 @@ nav {
     -webkit-app-region: no-drag;
 }
 
-nav > #openedtab {
+nav > #tabs-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: absolute;
+    left: 1rem;
+    color: #444;
+}
+
+nav > #tabs-wrapper > p {
     font-family: 'Open Sans', sans-serif;
     font-size: .85rem;
     font-weight: 600;
-    position: absolute;
-    max-width: 20%;
-    left: 1rem;
+    position: relative;
 }
 
-nav > #openedtab::before {
+nav > #tabs-wrapper > p::before {
     content: '';
     position: absolute;
-    top: 50%;
+    top: -.325rem;
     left: -.5rem;
     width: calc(100% + 1rem);
-    height: 65%;
-    transform: translateY(-50%);
+    height: calc(100% + .75rem);
     background: #aaa;
     border-radius: 6px;
     opacity: .5;
     z-index: -1;
+}
+
+.tippy-content {
+    padding: .3rem;
+}
+
+#tabs-tooltip {
+    margin: .2rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    list-style: none;
+}
+
+#tabs-tooltip > li > button {
+    padding: .5rem 1rem;
+    width: 100%;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(255, 255, 255, .15);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .15s;
+}
+
+#tabs-tooltip > li > button:hover {
+    background: #666;
 }
 
 nav > #searchbar {

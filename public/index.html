@@ -6,29 +6,35 @@
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
    </head>
    <body>
-      <nav>
-         <div id="openedtab" v-if="Object.keys(this.opened).length > 0">
-            <p>{{ this.opened.title }}</p>
-         </div>
-         <div id="searchbar">
-            <i v-if="isHTTPSPage()" :style="{ 'color': isHTTPSPage() ? 'black' : null }" class="fas fa-lock"></i>
-            <input
-               id="searchbar"
-               type="url"
-               placeholder="Search in the universe..."
-               v-model="url"
-               :style="{ 'padding-left': isHTTPSPage() &&!focusedSearchBar ? '2rem' : null, 'text-align': focusedSearchBar ? 'center' : null }"
-               @keydown="loadURL($event)"
-               @focusin="focusedSearchBar = true"
-               @focusout="focusedSearchBar = false"
-            ></input>
-         </div>
-         <div id="controls">
-            <div onclick="quit()" style="background: #FF3B30;" @click.prevent="closeApp()"></div>
-            <div onclick="maximize()" style="background: #FFCC00; border-radius: 0;"></div>
-         </div>
-      </nav>
+      <div id="root">
+         <nav>
+            <div id="tabs-wrapper">
+               <i class="fas fa-plus" style="cursor: pointer;" @click.prevent="newTab()"></i>
+               <p v-if="opened[openedIndex].title != null">{{ opened[openedIndex].title }}</p>
+            </div>
+            <div id="searchbar">
+               <i v-if="isHTTPSPage()" :style="{ 'color': isHTTPSPage() ? 'black' : null }" class="fas fa-lock"></i>
+               <input
+                  id="searchbar"
+                  type="url"
+                  placeholder="Search in the universe..."
+                  v-model="url"
+                  :style="{ 'padding-left': isHTTPSPage() &&!focusedSearchBar ? '2rem' : null, 'text-align': focusedSearchBar ? 'center' : null }"
+                  @keydown="loadURL($event)"
+                  @focusin="focusedSearchBar = true"
+                  @focusout="focusedSearchBar = false"
+               ></input>
+            </div>
+            <div id="controls">
+               <div @click.prevent="closeApp()" style="background: #FF3B30;" @click.prevent="closeApp()"></div>
+               <!-- <div @click.prevent="maximize()" style="background: #FFCC00; border-radius: 0;"></div> -->
+            </div>
+         </nav>
+      </div>
       <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+      <script src="https://unpkg.com/@popperjs/core@2"></script>
+      <script src="https://unpkg.com/tippy.js@6"></script>
+      <script src="https://unpkg.com/mitt/dist/mitt.umd.js"></script>
       <script src="./script.js"></script>
    </body>
 </html>

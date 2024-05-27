@@ -1,15 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 const superagent = require('superagent');
 const cheerio = require('cheerio');
-const mitt = require('mitt');
 
 contextBridge.exposeInMainWorld('electron', {
    loadPage: url => ipcRenderer.send('load-page', url),
-   scrapURL: url => {
-      fetch(url).then(html => {
-         console.log(cheerio.load(html));
-      });
-   },
+   maximize: () => ipcRenderer.send('max-app', {}),
    closeApp: () => ipcRenderer.send('close-app', {})
 });
 

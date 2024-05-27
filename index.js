@@ -1,7 +1,5 @@
 const { app, BrowserWindow, WebContentsView, ipcMain } = require('electron');
 const path = require('path');
-const cheerio = require('cheerio');
-const mitt = require('mitt');
 
 const winSize = { width: 1024, height: 600 };
 
@@ -24,10 +22,9 @@ function createWindow() {
       parent: win,
       width: winSize.width,
       height: winSize.height,
-      transparent: true,
       frame: false,
+      transparent: true,
       center: true,
-      resizable: false,
       vibrancy: 'under-window',
       webPreferences: {
          nodeIntegration: true,
@@ -44,20 +41,23 @@ function createWindow() {
    });
 
    const view = new WebContentsView();
-   // view.setBounds({ width: winSize.width, height: winSize.height - 57, x: 0, y: 57 });
-   view.webContents.loadURL('about:blank');
    view.webContents.on('did-navigate', () => {
       const url = view.webContents.getURL();
       if(url.includes('about:blank')) return;
       topbar.webContents.send('navigate', url);
    });
    win.setContentView(view);
+   const contentBounds = win.getContentBounds();
+   contentBounds.y += 57;
+   contentBounds.height -= 57;
+   // win.setContentBounds(contentBounds);
    // view.webContents.openDevTools({ mode: 'undocked' });
 
    win.on('resize', () => {
-      console.log(win.getSize());
-      topbar.setSize(...win.getSize());
-      console.log(win.getSize());
+      topbar.setBounds(win.getBounds());
+   });
+   topbar.on('resize', () => {
+      win.setBounds(topbar.getBounds());
    });
    
    ipcMain.on('load-page', (_, url) => {
@@ -66,8 +66,16 @@ function createWindow() {
    });
    
    ipcMain.on('close-app', () => win.close());
-   ipcMain.on('max-app', () => win.maximize());
-   ipcMain.on('min-app', () => win.minimize());
+   ipcMain.on('max-app', () => {
+      if(win.isMaximized()) {
+         win.setMaximumSize(...Object.values(winSize));
+         topbar.setMaximumSize(...Object.values(winSize));
+      }
+      else {
+         win.maximize();
+         topbar.maximize();
+      }
+   });
    
    topbar.on('close', () => app.quit()); 
 }
