@@ -12,7 +12,7 @@ jobs:
       packages: write
     steps:
       - name: Setup NodeJs v20
-      uses: actions/setup-node@v4
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
       - run: npm i
@@ -20,7 +20,7 @@ jobs:
       - run: npm run make
 
       - name: Upload shipped build as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Yomea
-        path: out/make/
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yomea
+          path: out/make/
