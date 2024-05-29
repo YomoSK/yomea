@@ -10,7 +10,7 @@
          <nav>
             <div id="tabs-wrapper">
                <i class="fas fa-plus" style="cursor: pointer;" @click.prevent="newTab()"></i>
-               <p v-if="opened[openedIndex].title != null">{{ opened[openedIndex].title }}</p>
+               <p v-if="opened[openedIndex].title != null">{{ getTitle() }}</p>
             </div>
             <div id="searchbar">
                <i v-if="isHTTPSPage()" :style="{ 'color': isHTTPSPage() ? 'black' : null }" class="fas fa-lock"></i>
@@ -25,11 +25,16 @@
                   @focusout="focusedSearchBar = false"
                ></input>
             </div>
+            <div id="update-check">
+               <i class="fa-solid fa-rotate" ref="updater-icon"></i>
+            </div>
             <div id="controls">
                <div @click.prevent="closeApp()" style="background: #FF3B30;" @click.prevent="closeApp()"></div>
                <!-- <div @click.prevent="maximize()" style="background: #FFCC00; border-radius: 0;"></div> -->
             </div>
          </nav>
+
+         <p v-if="opened[openedIndex].url == 'about:blank' && notice.length > 0" v-html="notice.join('<br>')" id="notice"></p>
       </div>
       <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
       <script src="https://unpkg.com/@popperjs/core@2"></script>

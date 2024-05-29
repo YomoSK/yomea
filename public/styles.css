@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Cantarell&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Palanquin+Dark:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
 body {
@@ -39,6 +40,8 @@ nav > #tabs-wrapper > p {
     font-family: 'Open Sans', sans-serif;
     font-size: .85rem;
     font-weight: 600;
+    max-width: 5.5rem;
+    text-wrap: nowrap;
     position: relative;
 }
 
@@ -53,6 +56,26 @@ nav > #tabs-wrapper > p::before {
     border-radius: 6px;
     opacity: .5;
     z-index: -1;
+}
+
+nav > #update-check {
+    margin-left: calc(40% + 1rem);
+    position: absolute;
+    transform: translateX(75%);
+}
+
+nav > #update-check > i {
+    animation: spinning 1s ease infinite;
+}
+
+@keyframes spinning {
+    from {
+        transform: rotateX(180deg) rotate(0);
+    }
+
+    to {
+        transform: rotateX(180deg) rotate(1turn);
+    }
 }
 
 .tippy-content {
@@ -124,4 +147,14 @@ nav > #controls > div {
     aspect-ratio: 1;
     border-radius: 50%;
     cursor: pointer;
+}
+
+p#notice {
+    margin-top: calc(2rem + 57px);
+    font-family: 'Palanquin Dark', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-align: center;
+    opacity: .4;
 }
