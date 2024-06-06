@@ -40,7 +40,6 @@ nav > #tabs-wrapper > p {
     font-family: 'Open Sans', sans-serif;
     font-size: .85rem;
     font-weight: 600;
-    max-width: 5.5rem;
     text-wrap: nowrap;
     position: relative;
 }

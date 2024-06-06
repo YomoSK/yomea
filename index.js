@@ -1,7 +1,20 @@
 const { app, BrowserWindow, WebContentsView, ipcMain } = require('electron');
+const fs = require('fs');
 const path = require('path');
+const historyFile = './history.json';
 
 const winSize = { width: 1024, height: 600 };
+
+function logHistory(url, date = Date.now()) {
+   if(!fs.existsSync(historyFile)) fs.writeFileSync(historyFile, '[]');
+   fs.readFile(historyFile, (err, data) => {
+      const history = JSON.parse(data);
+      history.push({ url, date });
+      fs.writeFile(historyFile, JSON.stringify(history), err => {
+         if(err) console.error(err);
+      });
+   });
+}
 
 function createWindow() {
    const win = new BrowserWindow({
@@ -15,7 +28,8 @@ function createWindow() {
       webPreferences: {
          nodeIntegration: true,
          contextIsolation: false
-      }
+      },
+      icon: './icon.png'
    });
    
    const topbar = new BrowserWindow({
@@ -44,6 +58,7 @@ function createWindow() {
    view.webContents.on('did-navigate', () => {
       const url = view.webContents.getURL();
       if(url.includes('about:blank')) return;
+      logHistory(url, Date.now() - 1);
       topbar.webContents.send('navigate', url);
    });
    win.setContentView(view);
@@ -61,6 +76,7 @@ function createWindow() {
    });
    
    ipcMain.on('load-page', (_, url) => {
+      logHistory(url, Date.now());
       view.webContents.loadURL(url);
       win.setContentView(view);
    });
