@@ -9,9 +9,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
+        name: Use Node.js
         with:
           node-version: '20.10'
       - run: npm i
       - run: npm run make
+      - uses: actions/upload-artifact@v4
+        name: Upload shipped build to GitHub
+        with:
+          name: yomea-win32-x64
+          path: out/yomea-win32-x64/
