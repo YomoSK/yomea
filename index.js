@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const historyFile = './history.json';
 
-const winSize = { width: 1024, height: 600 };
+const winSize = { width: 1460, height: 820 };
 
 function logHistory(url, date = Date.now()) {
    if(!fs.existsSync(historyFile)) fs.writeFileSync(historyFile, '[]');

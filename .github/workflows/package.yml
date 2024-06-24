@@ -1,26 +1,17 @@
 name: Electron Build
-on:
-  push:
-    branches:
-      - main
+
+on: [push]
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+
     steps:
-      - name: Setup NodeJs v20
+      - uses: actions/checkout@v4
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.10'
       - run: npm i
-      - run: npx electron-forge import
       - run: npm run make
-
-      - name: Upload shipped build as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Yomea
-          path: out/make/
