@@ -19,4 +19,4 @@ jobs:
         name: Upload shipped build to GitHub
         with:
           name: yomea-win32-x64
-          path: out/yomea-win32-x64/
+          path: out/
