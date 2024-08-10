@@ -27,9 +27,7 @@ const app = Vue.createApp({
 
          if(this.url.includes('about:blank')) {
             window.electron.loadPage(this.url);
-            this.url = '';
-            this.opened[this.openedIndex].title = null;
-            this.opened[this.openedIndex].url = 'about:blank';
+            this.setURL('');
             target.blur();
             return;
          }
@@ -39,6 +37,10 @@ const app = Vue.createApp({
 
          window.electron.loadPage(this.url);
          this.opened[this.openedIndex] = { title: await window.webSupplier.getTitle(this.url), url: this.url };
+      },
+      async setURL(url) {
+         this.url = url;
+         this.opened[this.openedIndex] = { title: await window.webSupplier.getTitle(this.url), url: this.url || 'about:blank' };
       },
       newTab() {
          if(this.isEmptyURL()) return;
@@ -78,9 +80,14 @@ const app = Vue.createApp({
       }
    },
    mounted() {
-      window.emitter.recieve('navigate', async url => {
-         this.url = url;
-         this.opened[this.openedIndex] = { title: await window.webSupplier.getTitle(this.url), url: this.url };
+      window.emitter.recieve('navigate', async url => this.setURL(url));
+
+      document.addEventListener('click', async click => {
+         if(click.target.parentNode.id == 'notice') {
+            click.preventDefault();
+            this.setURL(click.target.getAttribute('href'));
+            window.electron.loadPage(this.url);
+         }
       });
 
       function updateCheckerTippy(text) {

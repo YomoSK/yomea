@@ -1,6 +1,6 @@
 {
   "name": "yomea",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Chromium-based, Electron-powered private web browser",
   "main": "index.js",
   "scripts": {

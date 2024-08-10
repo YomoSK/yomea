@@ -20,7 +20,7 @@ function createWindow() {
    const win = new BrowserWindow({
       width: winSize.width,
       height: winSize.height,
-      title: 'Yomea Preview Build',
+      title: 'Yomea',
       frame: false,
       center: true,
       movable: false,

@@ -34,7 +34,7 @@
             </div>
          </nav>
 
-         <p v-if="opened[openedIndex].url == 'about:blank' && notice.length > 0" v-html="notice.join('<br>')" id="notice"></p>
+         <p v-if="opened[openedIndex].url == 'about:blank' && notice.length > 0" v-html="notice.replace(/\n/g, '<br>')" id="notice"></p>
       </div>
       <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
       <script src="https://unpkg.com/@popperjs/core@2"></script>
