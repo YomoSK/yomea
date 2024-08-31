@@ -14,9 +14,9 @@ jobs:
         with:
           node-version: '20.10'
       - run: npm i
-      - run: npm run make
+      - run: npm run make -- --platform win32
       - uses: actions/upload-artifact@v4
         name: Upload shipped build to GitHub
         with:
           name: yomea-win32-x64
-          path: out/
+          path: out/make

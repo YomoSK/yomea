@@ -8,6 +8,7 @@
    <body>
       <div id="root">
          <nav>
+            <div id="top-bg" @click.prevent="topbarClicks++"></div>
             <div id="tabs-wrapper">
                <i class="fas fa-plus" style="cursor: pointer;" @click.prevent="newTab()"></i>
                <p v-if="opened[openedIndex].title != null">{{ getTitle() }}</p>

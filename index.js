@@ -84,8 +84,8 @@ function createWindow() {
    ipcMain.on('close-app', () => win.close());
    ipcMain.on('max-app', () => {
       if(win.isMaximized()) {
-         win.setMaximumSize(...Object.values(winSize));
-         topbar.setMaximumSize(...Object.values(winSize));
+         // win.setSize(...Object.values(winSize));
+         // topbar.setSize(...Object.values(winSize));
       }
       else {
          win.maximize();

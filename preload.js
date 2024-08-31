@@ -24,6 +24,6 @@ contextBridge.exposeInMainWorld('webSupplier', {
 });
 
 contextBridge.exposeInMainWorld('emitter', {
-   send: (channel, data) => ipcRenderer.send,
+   send: (channel, data) => ipcRenderer.send(channel, data),
    recieve: (channel, callback) => ipcRenderer.on(channel, (_, ...data) => callback(...data))
 });

@@ -15,7 +15,8 @@ const app = Vue.createApp({
          notice: [],
          tabsTippy: null,
          updateCheckerTippy: null,
-         focusedSearchBar: false
+         focusedSearchBar: false,
+         topbarClicks: 0
       }
    },
    methods: {
@@ -144,6 +145,15 @@ const app = Vue.createApp({
             });
          },
          deep: true
+      },
+      topbarClicks(newValue, oldValue) {
+         if(newValue == 1) {
+            setTimeout(() => {
+               if(this.topbarClicks < 2) return;
+               window.emitter.send('max-app', true);
+               this.topbarClicks = 0;
+            }, 250);
+         }
       }
    }
 });
