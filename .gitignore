@@ -2,9 +2,9 @@ node_modules
 out
 history.json
 
-src-tauri/target
-src-tauri/Cargo.lock
-src-tauri/gen
+rust-src/target
+rust-src/Cargo.lock
+rust-src/gen
 
 # Added by cargo
 
