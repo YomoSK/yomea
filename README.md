@@ -8,7 +8,7 @@ Yomea is currently in development state, at this point no builds are shipped by 
 
 ## Steps to build this repository
 
-> [!NOTE]
+> [!IMPORTANT]
 > Make sure you have installed `git` and `curl`.
 
 **1.** Firstly clone Yomea repository onto your machine.

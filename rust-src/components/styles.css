@@ -21,14 +21,20 @@ body::before {
 }
 
 nav {
-   padding: .75rem 1.25rem;
+   /* padding: .75rem 1.25rem; */
+   padding: .75rem 1.25rem .75rem .75rem;
    display: grid;
    grid-template-columns: repeat(3, 1fr);
    align-items: center;
    height: -webkit-fill-available;
+   -webkit-app-region: drag;
 }
 
-nav > #tabs,  nav > #controls {
+nav svg, nav > #searchbar, nav > * > div {
+   -webkit-app-region: no-drag;
+}
+
+nav > #tabs, nav > #controls {
    height: -webkit-fill-available;
    display: flex;
    gap: .5rem;

@@ -1,5 +1,5 @@
 use isahc::ReadResponseExt;
-use tauri::{Builder, LogicalPosition, LogicalSize, WebviewBuilder, WebviewUrl, WindowBuilder};
+use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, WebviewBuilder, WebviewUrl, WindowBuilder};
 use serde_json::Value;
 
 pub struct _Yomea {
@@ -7,7 +7,7 @@ pub struct _Yomea {
 }
 
 pub static YOMEA: _Yomea = _Yomea {
-   url: "https://google.com"
+   url: "about:blank"
 };
 
 pub fn get_title_url(url: String, followredirects: bool) -> Result<String, u16> {
@@ -40,13 +40,49 @@ pub fn get_title_url(url: String, followredirects: bool) -> Result<String, u16> 
       Ok(title.inner_html())
    }
    else {
-      Ok("Invalid title tag".to_string())
+      Ok("".to_string())
    }
 }
 
 #[tauri::command]
 fn get_title() -> String {
-   return get_title_url(YOMEA.url.to_string(), true).unwrap();
+   let url = YOMEA.url.to_string();
+   if url == "about:blank" {
+      return "".to_string();
+   }
+
+   match get_title_url(url, true) {
+      Ok(title) => title,
+      Err(code) => code.to_string()
+   }
+}
+
+#[tauri::command]
+fn load_url(app: AppHandle, url: String) {
+   let topbar = app.get_webview("topbar").unwrap();
+   let mut webview = app.get_webview("webview").unwrap();
+   // TODO: Basically this requests the site twice:
+   //    1. window.location.href
+   //    2. get_title_url()
+   webview.navigate(url.parse().unwrap()).unwrap();
+
+   let title = get_title_url(url, true).unwrap_or("".to_string());
+   // if title.is_err() {
+   //    topbar.emit("title_change", title.err());
+   // }
+   // else {
+   //    topbar.emit("title_change", title.unwrap().to_string());
+   // }
+   // match get_title_url(url, true) {
+   //    Ok(title) => topbar.emit("title_change", title),
+   //    Err(code) => topbar.emit("title_change", "code")
+   // }
+   topbar.emit("title_change", title).unwrap();
+}
+
+#[tauri::command]
+fn close(app: AppHandle) {
+   app.exit(0);
 }
 
 pub fn run() {
@@ -54,7 +90,7 @@ pub fn run() {
    let size = serde_json::json!({ "width": 1400, "height": 800 });
 
    Builder::default()
-      .invoke_handler(tauri::generate_handler![get_title])
+      .invoke_handler(tauri::generate_handler![get_title, load_url, close])
       .setup(move |app| {
          let topbarcomponent = "topbar.html".into();
 
@@ -73,10 +109,16 @@ pub fn run() {
             WebviewUrl::App(topbarcomponent)
          );
 
+         let handle = app.app_handle().clone();
          let webview = WebviewBuilder::new(
             "webview",
             WebviewUrl::External(YOMEA.url.parse().unwrap())
-         );
+         ).on_navigation(move |url| {
+            let topbar = handle.get_webview("topbar").unwrap();
+            topbar.emit("url_change", url.to_string()).unwrap();
+            topbar.emit("title_change", get_title_url(url.to_string(), false).unwrap_or("".to_string())).unwrap();
+            true
+         });
 
          window.add_child(
             topbar.auto_resize(),
