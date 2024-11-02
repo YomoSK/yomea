@@ -16,4 +16,10 @@ Yomea is currently in development state, at this point no builds are shipped by 
 git clone https://github.com/YomoSK/yomea
 ```
 
+**2.** Then use cargo to run the project.
+```bash
+cd rust-src
+cargo run
+```
+
 [Website](https://yomea.dev)
