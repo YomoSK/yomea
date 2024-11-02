@@ -1,3 +1,11 @@
 node_modules
 out
 history.json
+
+rust-src/target
+rust-src/Cargo.lock
+rust-src/gen
+
+# Added by cargo
+
+/target
