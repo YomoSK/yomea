@@ -2,15 +2,7 @@ use isahc::ReadResponseExt;
 use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, WebviewBuilder, WebviewUrl, WindowBuilder};
 use serde_json::Value;
 
-pub struct _Yomea {
-   pub url: &'static str
-}
-
-pub static YOMEA: _Yomea = _Yomea {
-   url: "about:blank"
-};
-
-pub fn get_title_url(url: String, followredirects: bool) -> Result<String, u16> {
+pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
    let mut http = match isahc::get(url) {
       Ok(res) => res,
       Err(_) => {
@@ -24,7 +16,7 @@ pub fn get_title_url(url: String, followredirects: bool) -> Result<String, u16> 
    if status.is_redirection() && followredirects {
       if let Some(location) = http.headers().get("Location") {
          if let Ok(redirect) = location.to_str() {
-            return Ok(get_title_url(redirect.to_string(), true).unwrap());
+            return Ok(get_title_url(redirect, true).unwrap());
          }
       }
    }
@@ -45,28 +37,17 @@ pub fn get_title_url(url: String, followredirects: bool) -> Result<String, u16> 
 }
 
 #[tauri::command]
-fn get_title() -> String {
-   let url = YOMEA.url.to_string();
-   if url == "about:blank" {
-      return "".to_string();
-   }
-
-   match get_title_url(url, true) {
-      Ok(title) => title,
-      Err(code) => code.to_string()
-   }
-}
-
-#[tauri::command]
-fn load_url(app: AppHandle, url: String) {
+fn load_url(app: AppHandle, url: &str) {
    let topbar = app.get_webview("topbar").unwrap();
    let mut webview = app.get_webview("webview").unwrap();
    // TODO: Basically this requests the site twice:
    //    1. window.location.href
    //    2. get_title_url()
    webview.navigate(url.parse().unwrap()).unwrap();
-
+   
    let title = get_title_url(url, true).unwrap_or("".to_string());
+   topbar.emit("title_change", title).unwrap();
+
    // if title.is_err() {
    //    topbar.emit("title_change", title.err());
    // }
@@ -77,7 +58,6 @@ fn load_url(app: AppHandle, url: String) {
    //    Ok(title) => topbar.emit("title_change", title),
    //    Err(code) => topbar.emit("title_change", "code")
    // }
-   topbar.emit("title_change", title).unwrap();
 }
 
 #[tauri::command]
@@ -90,9 +70,10 @@ pub fn run() {
    let size = serde_json::json!({ "width": 1400, "height": 800 });
 
    Builder::default()
-      .invoke_handler(tauri::generate_handler![get_title, load_url, close])
+      .invoke_handler(tauri::generate_handler![load_url, close])
       .setup(move |app| {
-         let topbarcomponent = "topbar.html".into();
+         let topbarcomponent = "topbar/index.html".into();
+         let homecomponent = "home/index.html".into();
 
          let width = size.get("width").and_then(Value::as_f64).unwrap();
          let height = size.get("height").and_then(Value::as_f64).unwrap();
@@ -112,11 +93,21 @@ pub fn run() {
          let handle = app.app_handle().clone();
          let webview = WebviewBuilder::new(
             "webview",
-            WebviewUrl::External(YOMEA.url.parse().unwrap())
+            WebviewUrl::App(homecomponent)
          ).on_navigation(move |url| {
             let topbar = handle.get_webview("topbar").unwrap();
-            topbar.emit("url_change", url.to_string()).unwrap();
-            topbar.emit("title_change", get_title_url(url.to_string(), false).unwrap_or("".to_string())).unwrap();
+            let strurl = url.to_string();
+
+            if !strurl.starts_with("http") {
+               println!("Blocked access for {}", strurl);
+               return false;
+            }
+
+            if !strurl.contains("tauri.localhost") && !strurl.contains("127.0.0.1:1430") {
+               topbar.emit("url_change", strurl).unwrap();
+               topbar.emit("title_change", get_title_url(url.as_str(), false).unwrap_or("".to_string())).unwrap();
+            }
+
             true
          });
 
