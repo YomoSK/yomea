@@ -1,6 +1,10 @@
+use std::{fs::File, io::Write, path::Path, time::{SystemTime, UNIX_EPOCH}};
+
 use isahc::ReadResponseExt;
-use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, WebviewBuilder, WebviewUrl, WindowBuilder};
+use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, WebviewBuilder, WebviewUrl, WindowBuilder, Wry};
 use serde_json::Value;
+
+static HISTORY_PATH: &str = "./history.json";
 
 pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
    let mut http = match isahc::get(url) {
@@ -39,10 +43,29 @@ pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
 #[tauri::command]
 fn load_url(app: AppHandle, url: &str) {
    let topbar = app.get_webview("topbar").unwrap();
-   let mut webview = app.get_webview("webview").unwrap();
+   let mut webview = app.get_webview("tab-0").unwrap();
    // TODO: Basically this requests the site twice:
    //    1. window.location.href
    //    2. get_title_url()
+
+   if url == "@home" {
+      let _size = webview.size().unwrap();
+      webview.close().unwrap();
+
+      // let newtab = WebviewBuilder::<Wry>::new(
+      //    "tab-0",
+      //    WebviewUrl::App("home/index.html".into())
+      // );
+      // app.get_window("main").unwrap().add_child(
+      //    newtab.auto_resize(),
+      //    LogicalPosition::new(0.0, 60.0),
+      //    LogicalSize::new(_size.width, _size.height)
+      // ).unwrap();
+      // webview.navigate(WebviewUrl::App("home/index.html".into()).);
+
+      return;
+   }
+
    webview.navigate(url.parse().unwrap()).unwrap();
    
    let title = get_title_url(url, true).unwrap_or("".to_string());
@@ -61,6 +84,44 @@ fn load_url(app: AppHandle, url: &str) {
 }
 
 #[tauri::command]
+fn new_tab(app: AppHandle) {
+   let window = app.get_window("main").unwrap();
+   let tabs = app.webviews().clone();
+
+   let tab = WebviewBuilder::<Wry>::new(
+      format!("tab-{}", tabs.len() - 1),
+      WebviewUrl::External("https://maps.google.com".parse().unwrap())
+   );
+
+   let size: LogicalSize<f64> = window.inner_size().unwrap().to_logical(1.0);
+
+   // window.get_webview("tab-0").unwrap().hide().unwrap();
+
+   window.add_child(
+      tab.auto_resize(),
+      LogicalPosition::new(0.0, 60.0),
+      LogicalSize::new(size.width, size.height)
+   ).unwrap();
+
+   // window.show().unwrap();
+
+   println!("NEW EMPTY TAB!");
+   println!("TABS: {}", tabs.len() + 1);
+}
+
+fn get_recent_json() -> Value {
+   match serde_json::from_reader(File::open(HISTORY_PATH).unwrap()) {
+      Ok(h) => h,
+      Err(_) => serde_json::json!([])
+   }
+}
+
+#[tauri::command]
+fn get_recent_tabs(app: AppHandle) {
+   app.get_webview(format!("tab-{}", app.get_window("main").unwrap().webviews().len() - 2).as_str()).unwrap().emit("recent_tabs", get_recent_json().to_string()).unwrap();
+}
+
+#[tauri::command]
 fn close(app: AppHandle) {
    app.exit(0);
 }
@@ -69,18 +130,23 @@ pub fn run() {
    let title = "Yomea";
    let size = serde_json::json!({ "width": 1400, "height": 800 });
 
+   let hpath = Path::new(HISTORY_PATH);
+   if !hpath.exists() {
+      File::create_new(hpath).unwrap().write_all("[]".as_bytes()).unwrap();
+   }
+
    Builder::default()
-      .invoke_handler(tauri::generate_handler![load_url, close])
+      .invoke_handler(tauri::generate_handler![load_url, new_tab, get_recent_tabs, close])
       .setup(move |app| {
          let topbarcomponent = "topbar/index.html".into();
-         let homecomponent = "home/index.html".into();
+         let homecomponent: &str = "home/index.html";
 
          let width = size.get("width").and_then(Value::as_f64).unwrap();
          let height = size.get("height").and_then(Value::as_f64).unwrap();
 
          let window = WindowBuilder::new(app, "main")
             .title(title)
-            .inner_size(width - 1.0, height - 1.0)
+            .inner_size(width, height)
             .transparent(true)
             .decorations(false)
             .build()?;
@@ -91,21 +157,30 @@ pub fn run() {
          );
 
          let handle = app.app_handle().clone();
-         let webview = WebviewBuilder::new(
-            "webview",
-            WebviewUrl::App(homecomponent)
+         let hometab = WebviewBuilder::new(
+            "tab-0",
+            WebviewUrl::App(homecomponent.into())
          ).on_navigation(move |url| {
             let topbar = handle.get_webview("topbar").unwrap();
             let strurl = url.to_string();
-
+            let title = get_title_url(&strurl, false).unwrap_or("".to_string());
+            
             if !strurl.starts_with("http") {
                println!("Blocked access for {}", strurl);
                return false;
             }
 
             if !strurl.contains("tauri.localhost") && !strurl.contains("127.0.0.1:1430") {
-               topbar.emit("url_change", strurl).unwrap();
-               topbar.emit("title_change", get_title_url(url.as_str(), false).unwrap_or("".to_string())).unwrap();
+               topbar.emit("url_change", strurl.clone()).unwrap();
+               topbar.emit("title_change", title.clone()).unwrap();
+
+               let mut history = get_recent_json().as_array().unwrap().clone();
+               history.push(serde_json::json!({
+                  "url": strurl,
+                  "title": title,
+                  "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+               }));
+               File::create(HISTORY_PATH).unwrap().write_all(serde_json::to_string_pretty(&history).unwrap().as_bytes()).unwrap();
             }
 
             true
@@ -114,16 +189,14 @@ pub fn run() {
          window.add_child(
             topbar.auto_resize(),
             LogicalPosition::new(0.0, 0.0),
-            LogicalSize::new(width, 60.0)
+            LogicalSize::new(width * 1.01, 60.0)
          )?;
 
          window.add_child(
-            webview.auto_resize(),
+            hometab.auto_resize(),
             LogicalPosition::new(0.0, 60.0),
-            LogicalSize::new(width, height - 60.0)
+            LogicalSize::new(width * 1.01, height - 23.0)
          )?;
-
-         window.set_size(LogicalSize::new(width, height))?;
 
          Ok(())
       })

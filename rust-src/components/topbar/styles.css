@@ -55,6 +55,7 @@ nav > #tabs > #tab-title {
    justify-content: center;
    align-items: center;
    text-wrap: nowrap;
+   cursor: default;
 }
 
 nav > #searchbar {

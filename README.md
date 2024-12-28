@@ -22,4 +22,6 @@ cd rust-src
 cargo run
 ```
 
+**3.** Yomea should start soon after compiling all of dependencies.
+
 [Website](https://yomea.dev)

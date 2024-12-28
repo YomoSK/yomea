@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+body {
+   margin: 0;
+   padding: 0;
+   height: 100vh;
+   overflow: hidden;
+   user-select: none;
+}
+
+#wrapper {
+   margin: 0 auto;
+   padding: 2.5rem 1rem;
+   max-width: 600px;
+   height: calc(100% - 4rem);
+}
+
+#wrapper {
+   display: flex;
+   flex-direction: column;
+   gap: .5rem;
+}
+
+#wrapper > h2 {
+   margin: 0;
+   font-family: 'Inter', sans-serif;
+   font-weight: 800;
+   font-size: 1.1rem;
+   letter-spacing: 1px;
+   opacity: .9;
+}
+
+#wrapper > #recent-tabs {
+   display: grid;
+   grid-template-columns: repeat(4, 25%);
+   gap: .5rem;
+}
+
+#wrapper > #recent-tabs > div {
+   background: #E2E5E8;
+   border-radius: 8px;
+   opacity: .5;
+   aspect-ratio: 1;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   cursor: pointer;
+   transition: all .15s;
+}
+
+#wrapper > #recent-tabs > div:hover {
+   color: rgba(0, 0, 0, .5);
+   border-radius: 6px;
+   opacity: 1;
+}
+
+#wrapper > #recent-tabs > div > span {
+   text-align: center;
+   font-family: 'Inter', sans-serif;
+   font-weight: 800;
+   letter-spacing: 1px;
+}

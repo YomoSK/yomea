@@ -1,6 +1,6 @@
 node_modules
 out
-history.json
+**/history.json
 
 rust-src/target
 rust-src/Cargo.lock
