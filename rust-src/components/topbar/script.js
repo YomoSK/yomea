@@ -48,6 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
    window.addEventListener('contextmenu', event => event.preventDefault());
 });
 
+document.addEventListener('keydown', event => {
+   if(event.key == 'F5') event.preventDefault();
+});
+
 listen('title_change', ({ payload }) => {
    if(payload) {
       title.innerText = subpayload(payload);

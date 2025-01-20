@@ -20,7 +20,7 @@ pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
    if status.is_redirection() && followredirects {
       if let Some(location) = http.headers().get("Location") {
          if let Ok(redirect) = location.to_str() {
-            return Ok(get_title_url(redirect, true).unwrap());
+            return Ok(get_title_url(redirect, true).unwrap_or("".to_string()));
          }
       }
    }
@@ -95,7 +95,7 @@ fn new_tab(app: AppHandle) {
 
    let size: LogicalSize<f64> = window.inner_size().unwrap().to_logical(1.0);
 
-   // window.get_webview("tab-0").unwrap().hide().unwrap();
+   window.get_webview("tab-0").unwrap().hide().unwrap();
 
    window.add_child(
       tab.auto_resize(),
@@ -103,7 +103,7 @@ fn new_tab(app: AppHandle) {
       LogicalSize::new(size.width, size.height)
    ).unwrap();
 
-   // window.show().unwrap();
+   window.get_webview(&format!("tab-{}", tabs.iter().len() - 2)).unwrap().show().unwrap();
 
    println!("NEW EMPTY TAB!");
    println!("TABS: {}", tabs.len() + 1);
@@ -139,7 +139,7 @@ pub fn run() {
       .invoke_handler(tauri::generate_handler![load_url, new_tab, get_recent_tabs, close])
       .setup(move |app| {
          let topbarcomponent = "topbar/index.html".into();
-         let homecomponent: &str = "home/index.html";
+         let homecomponent = "home/index.html".into();
 
          let width = size.get("width").and_then(Value::as_f64).unwrap();
          let height = size.get("height").and_then(Value::as_f64).unwrap();
@@ -159,7 +159,7 @@ pub fn run() {
          let handle = app.app_handle().clone();
          let hometab = WebviewBuilder::new(
             "tab-0",
-            WebviewUrl::App(homecomponent.into())
+            WebviewUrl::App(homecomponent)
          ).on_navigation(move |url| {
             let topbar = handle.get_webview("topbar").unwrap();
             let strurl = url.to_string();
