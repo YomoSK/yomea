@@ -1,7 +1,7 @@
-use std::{fs::File, io::Write, path::Path, time::{SystemTime, UNIX_EPOCH}};
+use std::{env, fs::File, io::Write, path::Path, time::{SystemTime, UNIX_EPOCH}};
 
 use isahc::ReadResponseExt;
-use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, WebviewBuilder, WebviewUrl, WindowBuilder, Wry};
+use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, Url, WebviewBuilder, WebviewUrl, WindowBuilder, Wry};
 use serde_json::Value;
 
 static HISTORY_PATH: &str = "./history.json";
@@ -43,26 +43,13 @@ pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
 #[tauri::command]
 fn load_url(app: AppHandle, url: &str) {
    let topbar = app.get_webview("topbar").unwrap();
-   let mut webview = app.get_webview("tab-0").unwrap();
+   let webview = app.get_webview("tab-0").unwrap();
    // TODO: Basically this requests the site twice:
    //    1. window.location.href
    //    2. get_title_url()
 
    if url == "@home" {
-      let _size = webview.size().unwrap();
-      webview.close().unwrap();
-
-      // let newtab = WebviewBuilder::<Wry>::new(
-      //    "tab-0",
-      //    WebviewUrl::App("home/index.html".into())
-      // );
-      // app.get_window("main").unwrap().add_child(
-      //    newtab.auto_resize(),
-      //    LogicalPosition::new(0.0, 60.0),
-      //    LogicalSize::new(_size.width, _size.height)
-      // ).unwrap();
-      // webview.navigate(WebviewUrl::App("home/index.html".into()).);
-
+      webview.navigate(Url::parse("http://tauri.localhost/home/index.html").unwrap()).unwrap();
       return;
    }
 
@@ -165,7 +152,7 @@ pub fn run() {
             let strurl = url.to_string();
             let title = get_title_url(&strurl, false).unwrap_or("".to_string());
             
-            if !strurl.starts_with("http") {
+            if !strurl.starts_with("http") && !strurl.contains(&env::current_dir().unwrap().to_str().unwrap().replace("\\", "/")) {
                println!("Blocked access for {}", strurl);
                return false;
             }
@@ -181,6 +168,10 @@ pub fn run() {
                   "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
                }));
                File::create(HISTORY_PATH).unwrap().write_all(serde_json::to_string_pretty(&history).unwrap().as_bytes()).unwrap();
+            }
+            else {
+               topbar.emit("url_change", "").unwrap();
+               topbar.emit("title_change", "").unwrap();
             }
 
             true
