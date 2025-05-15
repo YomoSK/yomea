@@ -10,16 +10,20 @@ function subpayload(payload, length = 20) {
    return payload;
 }
 
+function getCurrentTabIndex() {
+   return +localStorage.getItem('currentTabIndex') || 0;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
    localStorage.clear();
 
-   // newTab.addEventListener('click', () => {
-   //    console.log('NEW_TAB');
-   //    invoke('new_tab');
-   // });
+   newTab.addEventListener('click', () => {
+      invoke('new_tab');
+      localStorage.setItem('currentTabIndex', getCurrentTabIndex() + 1);
+   });
 
    title.addEventListener('auxclick', () => {
-      invoke('load_url', { url: '@home' });
+      invoke('close_tab');
    });
 
    searchbar.addEventListener('keydown', ({ target, key }) => {
@@ -49,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('keydown', event => {
-   if(event.key == 'F5') event.preventDefault();
+   if(event.key == 'F5' || event.key == 'F12') event.preventDefault();
 });
 
 listen('title_change', ({ payload }) => {
@@ -63,6 +67,10 @@ listen('title_change', ({ payload }) => {
 listen('url_change', ({ payload }) => {
    let url = payload.endsWith('/') ? payload.substring(0, payload.length - 1) : payload;
    if(url == 'about:blank') url = '';
+   // if(url.includes('.') && url.split('.').length > 3) {
+   //    const end = url.split('.').pop();
+   //    if(end != 'html' && end != 'htm' && end != 'php' && end != 'aspx') return;
+   // }
 
    const isHTTPS = url.startsWith('https://');
 

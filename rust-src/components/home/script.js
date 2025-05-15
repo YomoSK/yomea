@@ -17,6 +17,10 @@ window.__TAURI__.event.listen('recent_tabs', ({ payload }) => {
    document.getElementById('wrapper').style.display = null;
 });
 
+document.addEventListener('keydown', event => {
+   if(event.key == 'F5' || event.key == 'F12') event.preventDefault();
+});
+
 window.addEventListener('DOMContentLoaded', () => {
    setTimeout(() => invoke('get_recent_tabs'), 1000);
 });

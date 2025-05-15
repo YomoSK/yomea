@@ -60,21 +60,27 @@ nav > #tabs > #tab-title {
 
 nav > #searchbar {
    position: relative;
+   width: 35vw;
    height: -webkit-fill-available;
 }
 
 nav > #searchbar > svg {
    position: absolute;
-   top: 50%;
-   left: .4rem;
-   transform: translateY(-50%);
+   top: .4rem;
+   left: 1rem;
+   transform: translate(-50%, 12.5%);
    width: 20px;
    display: none;
+   z-index: 1;
 }
 
 nav > #searchbar > input {
    padding: .4rem 1rem;
-   width: 100%;
+   position: absolute;
+   left: 50%;
+   transform: translateX(-50%);
+   /* width: calc(100% - 2rem); */
+   width: calc(100% - 20px - .8rem - 1rem);
    height: -webkit-fill-available;
    background: #E2E5E8;
    border: none;

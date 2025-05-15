@@ -1,11 +1,11 @@
-struct BrowserTab {
-   url: &str,
-   title: &str,
-   previous: BrowserTab,
-   next: BrowserTab
-}
+// struct BrowserTab {
+//    url: String,
+//    title: String,
+//    previous: BrowserTab,
+//    next: BrowserTab
+// }
 
-struct Browser {
-   tabs: Vec<BrowserTab>,
-   currentTabIndex: i64
+pub struct Browser {
+   // pub tabs: Vec<BrowserTab>,
+   pub current_tab_index: i64
 }

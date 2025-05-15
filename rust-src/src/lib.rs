@@ -1,10 +1,14 @@
-use std::{env, fs::File, io::Write, path::Path, time::{SystemTime, UNIX_EPOCH}};
+use std::{env, fs::File, io::Write, path::Path, sync::{LazyLock, Mutex}, time::{SystemTime, UNIX_EPOCH}};
 
 use isahc::ReadResponseExt;
 use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, Url, WebviewBuilder, WebviewUrl, WindowBuilder, Wry};
 use serde_json::Value;
+use types::Browser;
+
+mod types;
 
 static HISTORY_PATH: &str = "./history.json";
+static BROWSER: LazyLock<Mutex<Option<Browser>>> = LazyLock::new(|| Mutex::new(Some(Browser { current_tab_index: 0 })));
 
 pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
    let mut http = match isahc::get(url) {
@@ -42,8 +46,12 @@ pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
 
 #[tauri::command]
 fn load_url(app: AppHandle, url: &str) {
+   let lock = BROWSER.lock().unwrap();
+
    let topbar = app.get_webview("topbar").unwrap();
-   let webview = app.get_webview("tab-0").unwrap();
+   let webview = app.get_webview(&format!("tab-{}", lock.as_ref().unwrap().current_tab_index)).unwrap();
+
+   drop(lock);
    // TODO: Basically this requests the site twice:
    //    1. window.location.href
    //    2. get_title_url()
@@ -57,6 +65,7 @@ fn load_url(app: AppHandle, url: &str) {
    
    let title = get_title_url(url, true).unwrap_or("".to_string());
    topbar.emit("title_change", title).unwrap();
+   topbar.emit("url_change", url).unwrap();
 
    // if title.is_err() {
    //    topbar.emit("title_change", title.err());
@@ -70,19 +79,19 @@ fn load_url(app: AppHandle, url: &str) {
    // }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 fn new_tab(app: AppHandle) {
    let window = app.get_window("main").unwrap();
+   let topbar = app.get_webview("topbar").unwrap();
    let tabs = app.webviews().clone();
 
+   let label = format!("tab-{}", tabs.len() - 1);
    let tab = WebviewBuilder::<Wry>::new(
-      format!("tab-{}", tabs.len() - 1),
-      WebviewUrl::External("https://maps.google.com".parse().unwrap())
+      &label,
+      WebviewUrl::App("home/index.html".into())
    );
 
    let size: LogicalSize<f64> = window.inner_size().unwrap().to_logical(1.0);
-
-   window.get_webview("tab-0").unwrap().hide().unwrap();
 
    window.add_child(
       tab.auto_resize(),
@@ -90,10 +99,27 @@ fn new_tab(app: AppHandle) {
       LogicalSize::new(size.width, size.height)
    ).unwrap();
 
-   window.get_webview(&format!("tab-{}", tabs.iter().len() - 2)).unwrap().show().unwrap();
+   window.get_webview(&format!("tab-{}", tabs.len() - 2)).unwrap().show().unwrap();
+   topbar.emit("title_change", "").unwrap();
+   topbar.emit("url_change", "").unwrap();
 
-   println!("NEW EMPTY TAB!");
-   println!("TABS: {}", tabs.len() + 1);
+   let mut lock = BROWSER.lock().unwrap();
+   *lock = Some(Browser { current_tab_index: lock.as_mut().unwrap().current_tab_index + 1 });
+   drop(lock);
+}
+
+#[tauri::command]
+fn close_tab(app: AppHandle) {
+   let mut lock = BROWSER.lock().unwrap();
+   let current_tab_index = lock.as_ref().unwrap().current_tab_index;
+   if current_tab_index == 0 {
+      close(app);
+      return;
+   }
+
+   app.get_webview(&format!("tab-{}", current_tab_index)).unwrap().close().unwrap();
+   *lock = Some(Browser { current_tab_index: current_tab_index - 1 });
+   drop(lock);
 }
 
 fn get_recent_json() -> Value {
@@ -105,7 +131,8 @@ fn get_recent_json() -> Value {
 
 #[tauri::command]
 fn get_recent_tabs(app: AppHandle) {
-   app.get_webview(format!("tab-{}", app.get_window("main").unwrap().webviews().len() - 2).as_str()).unwrap().emit("recent_tabs", get_recent_json().to_string()).unwrap();
+   app.emit("recent_tabs", get_recent_json().to_string()).unwrap();
+   // app.get_webview(format!("tab-{}", app.get_window("main").unwrap().webviews().len() - 2).as_str()).unwrap().emit("recent_tabs", get_recent_json().to_string()).unwrap();
 }
 
 #[tauri::command]
@@ -123,7 +150,7 @@ pub fn run() {
    }
 
    Builder::default()
-      .invoke_handler(tauri::generate_handler![load_url, new_tab, get_recent_tabs, close])
+      .invoke_handler(tauri::generate_handler![load_url, new_tab, close_tab, get_recent_tabs, close])
       .setup(move |app| {
          let topbarcomponent = "topbar/index.html".into();
          let homecomponent = "home/index.html".into();
