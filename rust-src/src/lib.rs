@@ -3,12 +3,12 @@ use std::{env, fs::File, io::Write, path::Path, sync::{LazyLock, Mutex}, time::{
 use isahc::ReadResponseExt;
 use tauri::{AppHandle, Builder, Emitter, LogicalPosition, LogicalSize, Manager, Url, WebviewBuilder, WebviewUrl, WindowBuilder, Wry};
 use serde_json::Value;
-use types::Browser;
+use types::{Browser, BrowserTab};
 
 mod types;
 
 static HISTORY_PATH: &str = "./history.json";
-static BROWSER: LazyLock<Mutex<Option<Browser>>> = LazyLock::new(|| Mutex::new(Some(Browser { current_tab_index: 0 })));
+static BROWSER: LazyLock<Mutex<Browser>> = LazyLock::new(|| Mutex::new(Browser { tabs: vec![BrowserTab { url: "".to_string(), title: "".to_string() }], current_tab_index: 0 }));
 
 pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
    let mut http = match isahc::get(url) {
@@ -49,7 +49,7 @@ fn load_url(app: AppHandle, url: &str) {
    let lock = BROWSER.lock().unwrap();
 
    let topbar = app.get_webview("topbar").unwrap();
-   let webview = app.get_webview(&format!("tab-{}", lock.as_ref().unwrap().current_tab_index)).unwrap();
+   let webview = app.get_webview(&format!("tab-{}", lock.current_tab_index)).unwrap();
 
    drop(lock);
    // TODO: Basically this requests the site twice:
@@ -81,44 +81,64 @@ fn load_url(app: AppHandle, url: &str) {
 
 #[tauri::command(async)]
 fn new_tab(app: AppHandle) {
+   let mut lock = BROWSER.lock().unwrap();
+
    let window = app.get_window("main").unwrap();
    let topbar = app.get_webview("topbar").unwrap();
-   let tabs = app.webviews().clone();
+   let mut tabs = lock.tabs.clone();
 
-   let label = format!("tab-{}", tabs.len() - 1);
+   let label = format!("tab-{}", lock.current_tab_index + 1);
    let tab = WebviewBuilder::<Wry>::new(
       &label,
       WebviewUrl::App("home/index.html".into())
-   );
+   ).on_navigation(move |url| {
+      let mut lock = BROWSER.lock().unwrap();
+      let mut tabs = lock.tabs.clone();
+      tabs[lock.current_tab_index as usize].url = url.to_string();
+      tabs[lock.current_tab_index as usize].title = get_title_url(url.as_str(), true).unwrap_or("".to_string());
+      *lock = Browser { tabs, current_tab_index: lock.current_tab_index };
+      drop(lock);
+      true
+   });
 
    let size: LogicalSize<f64> = window.inner_size().unwrap().to_logical(1.0);
 
    window.add_child(
       tab.auto_resize(),
       LogicalPosition::new(0.0, 60.0),
-      LogicalSize::new(size.width, size.height)
+      LogicalSize::new(topbar.size().unwrap().to_logical(1.0).width, size.height)
    ).unwrap();
+   tabs.push(types::BrowserTab { url: "".to_string(), title: "".to_string() });
 
-   window.get_webview(&format!("tab-{}", tabs.len() - 2)).unwrap().show().unwrap();
+   window.get_webview(&format!("tab-{}", tabs.len() - 1)).unwrap().show().unwrap();
    topbar.emit("title_change", "").unwrap();
    topbar.emit("url_change", "").unwrap();
 
-   let mut lock = BROWSER.lock().unwrap();
-   *lock = Some(Browser { current_tab_index: lock.as_mut().unwrap().current_tab_index + 1 });
+   *lock = Browser { tabs: tabs, current_tab_index: lock.current_tab_index + 1 };
    drop(lock);
 }
 
 #[tauri::command]
 fn close_tab(app: AppHandle) {
    let mut lock = BROWSER.lock().unwrap();
-   let current_tab_index = lock.as_ref().unwrap().current_tab_index;
+
+   let topbar = app.get_webview("topbar").unwrap();
+
+   let mut tabs = lock.tabs.clone();
+   let current_tab_index = lock.current_tab_index;
    if current_tab_index == 0 {
       close(app);
       return;
    }
 
+   println!("Current index: {}", current_tab_index);
    app.get_webview(&format!("tab-{}", current_tab_index)).unwrap().close().unwrap();
-   *lock = Some(Browser { current_tab_index: current_tab_index - 1 });
+   tabs.remove(current_tab_index as usize);
+
+   topbar.emit("title_change", tabs[(current_tab_index - 1) as usize].title.to_string()).unwrap();
+   topbar.emit("url_change", tabs[(current_tab_index - 1) as usize].url.to_string()).unwrap();
+
+   *lock = Browser { tabs: tabs, current_tab_index: current_tab_index - 1 };
    drop(lock);
 }
 
@@ -187,6 +207,13 @@ pub fn run() {
             if !strurl.contains("tauri.localhost") && !strurl.contains("127.0.0.1:1430") {
                topbar.emit("url_change", strurl.clone()).unwrap();
                topbar.emit("title_change", title.clone()).unwrap();
+
+               let mut lock = BROWSER.lock().unwrap();
+               let mut tabs = lock.tabs.clone();
+               tabs[0].url = strurl.clone();
+               tabs[0].title = title.clone();
+               *lock = Browser { tabs, current_tab_index: lock.current_tab_index };
+               drop(lock);
 
                let mut history = get_recent_json().as_array().unwrap().clone();
                history.push(serde_json::json!({
