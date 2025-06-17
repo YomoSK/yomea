@@ -1,0 +1,24 @@
+{
+   "$schema": "https://schema.tauri.app/config/2.0.0-rc",
+   "productName": "Yomea",
+   "version": "0.1.0",
+   "identifier": "me.Yomo.Yomea",
+   "app": {
+      "withGlobalTauri": true,
+      "security": {
+         "csp": null
+      }
+   },
+   "bundle": {
+      "active": true,
+      "targets": "all",
+      "windows": {
+         "webviewInstallMode": {
+            "type": "offlineInstaller"
+         }
+      }
+   },
+   "build": {
+      "frontendDist": "./components"
+   }
+}
