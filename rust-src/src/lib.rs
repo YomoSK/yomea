@@ -9,6 +9,9 @@ mod types;
 
 static HISTORY_PATH: &str = "./history.json";
 static BROWSER: LazyLock<Mutex<Browser>> = LazyLock::new(|| Mutex::new(Browser { tabs: vec![BrowserTab { url: "".to_string(), title: "".to_string() }], current_tab_index: 0 }));
+static WINDOW_SIZE: LogicalSize<i32> = LogicalSize::new(1400, 800);
+
+static TOPBAR_HEIGHT: f64 = 60.0;
 
 pub fn get_title_url(url: &str, followredirects: bool) -> Result<String, u16> {
    let mut http = match isahc::get(url) {
@@ -101,12 +104,10 @@ fn new_tab(app: AppHandle) {
       true
    });
 
-   let size: LogicalSize<f64> = window.inner_size().unwrap().to_logical(1.0);
-
    window.add_child(
       tab.auto_resize(),
-      LogicalPosition::new(0.0, 60.0),
-      LogicalSize::new(topbar.size().unwrap().to_logical(1.0).width, size.height)
+      LogicalPosition::new(0.0, TOPBAR_HEIGHT),
+      LogicalSize::new(WINDOW_SIZE.width, WINDOW_SIZE.height - TOPBAR_HEIGHT as i32)
    ).unwrap();
    tabs.push(types::BrowserTab { url: "".to_string(), title: "".to_string() });
 
@@ -162,7 +163,6 @@ fn close(app: AppHandle) {
 
 pub fn run() {
    let title = "Yomea";
-   let size = serde_json::json!({ "width": 1400, "height": 800 });
 
    let hpath = Path::new(HISTORY_PATH);
    if !hpath.exists() {
@@ -175,12 +175,9 @@ pub fn run() {
          let topbarcomponent = "topbar/index.html".into();
          let homecomponent = "home/index.html".into();
 
-         let width = size.get("width").and_then(Value::as_f64).unwrap();
-         let height = size.get("height").and_then(Value::as_f64).unwrap();
-
          let window = WindowBuilder::new(app, "main")
             .title(title)
-            .inner_size(width, height)
+            .inner_size(WINDOW_SIZE.width as f64, WINDOW_SIZE.height as f64)
             .transparent(true)
             .decorations(false)
             .build()?;
@@ -188,7 +185,13 @@ pub fn run() {
          let topbar = WebviewBuilder::new(
             "topbar",
             WebviewUrl::App(topbarcomponent)
-         );
+         ).transparent(true);
+
+         // let topbar = WebviewWindow::builder(app, "topbar", WebviewUrl::App(topbarcomponent))
+         //    .transparent(true)
+         //    .decorations(false)
+         //    .auto_resize()
+         //    .build()?;
 
          let handle = app.app_handle().clone();
          let hometab = WebviewBuilder::new(
@@ -232,15 +235,15 @@ pub fn run() {
          });
 
          window.add_child(
-            topbar.auto_resize(),
+            topbar,
             LogicalPosition::new(0.0, 0.0),
-            LogicalSize::new(width * 1.01, 60.0)
+            LogicalSize::new(WINDOW_SIZE.width, TOPBAR_HEIGHT as i32)
          )?;
 
          window.add_child(
             hometab.auto_resize(),
-            LogicalPosition::new(0.0, 60.0),
-            LogicalSize::new(width * 1.01, height - 23.0)
+            LogicalPosition::new(0.0, TOPBAR_HEIGHT),
+            LogicalSize::new(WINDOW_SIZE.width, WINDOW_SIZE.height - TOPBAR_HEIGHT as i32)
          )?;
 
          Ok(())
